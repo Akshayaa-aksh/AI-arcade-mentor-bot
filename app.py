@@ -2,20 +2,18 @@ import os
 os.environ.pop("SSL_CERT_FILE", None)
 os.environ.pop("REQUESTS_CA_BUNDLE", None)
 
-# ── Monkey-patch gradio_client bug (gradio==4.44.0 + new pydantic) ──
-import gradio_client.utils as _gcu
+# ── Nuclear patch: stop gradio from crashing on api_info ──
+import gradio.routes as _gr_routes
+_original_api_info = _gr_routes.api_info
 
-def _patched_get_type(schema):
-    if not isinstance(schema, dict):
-        return "any"
-    if "const" in schema:
-        return "const"
-    if "enum" in schema:
-        return "enum"
-    return schema.get("type", "any")
+def _safe_api_info(*args, **kwargs):
+    try:
+        return _original_api_info(*args, **kwargs)
+    except Exception:
+        pass
 
-_gcu.get_type = _patched_get_type
-# ── End patch ────────────────────────────────────────────────────────
+_gr_routes.api_info = _safe_api_info
+# ── End patch ──────────────────────────────────────────────
 
 import gradio as gr
 from groq import Groq
