@@ -2,22 +2,6 @@ import os
 os.environ.pop("SSL_CERT_FILE", None)
 os.environ.pop("REQUESTS_CA_BUNDLE", None)
 
-# ── Patch: silence the gradio_client schema crash ──────────
-import gradio_client.utils as _gcu
-from gradio_client.utils import APIInfoParseError
-
-_original_json_schema = _gcu._json_schema_to_python_type
-
-def _safe_json_schema(schema, defs=None):
-    try:
-        return _original_json_schema(schema, defs)
-    except Exception:
-        return "Any"
-
-_gcu._json_schema_to_python_type = _safe_json_schema
-_gcu.json_schema_to_python_type = lambda schema: _safe_json_schema(schema, schema.get("$defs") if isinstance(schema, dict) else None)
-# ── End patch ───────────────────────────────────────────────
-
 import gradio as gr
 from groq import Groq
 from dotenv import load_dotenv
@@ -26,7 +10,7 @@ load_dotenv()
 
 api_key = os.getenv("GROQ_API_KEY")
 if not api_key:
-    raise ValueError("❌ GROQ_API_KEY not found in .env file")
+    raise ValueError("GROQ_API_KEY not found")
 
 client = Groq(api_key=api_key)
 
@@ -103,15 +87,13 @@ def chat(user_message, history, persona_key):
         bot_reply = completion.choices[0].message.content
     except Exception as e:
         bot_reply = f"⚠️ Error: {str(e)}"
-    history = history + [(user_message, bot_reply)]
-    return history, ""
+    return history + [(user_message, bot_reply)], ""
 
 def clear_chat():
     return [], ""
 
 def send_example(idx, history, persona_key):
-    text = PERSONAS[persona_key]["examples"][idx]
-    return chat(text, history, persona_key)
+    return chat(PERSONAS[persona_key]["examples"][idx], history, persona_key)
 
 def update_examples(persona_key):
     ex = PERSONAS[persona_key]["examples"]
@@ -125,25 +107,18 @@ with gr.Blocks(
     ),
     title="AI Arcade Mentor Bot",
     css="""
-        #title  { text-align: center; }
+        #title { text-align: center; }
         #subtitle { text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 10px; }
-        footer  { display: none !important; }
+        footer { display: none !important; }
     """
 ) as demo:
 
     gr.Markdown("# 🎓 AI Arcade Mentor Bot", elem_id="title")
-    gr.Markdown(
-        "Pick a mentor and start learning. Each expert stays in their lane.",
-        elem_id="subtitle",
-    )
+    gr.Markdown("Pick a mentor and start learning. Each expert stays in their lane.", elem_id="subtitle")
 
     with gr.Row():
         with gr.Column(scale=1):
-            persona_selector = gr.Radio(
-                choices=PERSONA_KEYS,
-                value=PERSONA_KEYS[0],
-                label="👤 Choose Your Mentor",
-            )
+            persona_selector = gr.Radio(choices=PERSONA_KEYS, value=PERSONA_KEYS[0], label="👤 Choose Your Mentor")
             gr.Markdown("### 💡 Quick Questions:")
             init_ex = PERSONAS[PERSONA_KEYS[0]]["examples"]
             ex1 = gr.Button(init_ex[0])
@@ -154,39 +129,18 @@ with gr.Blocks(
         with gr.Column(scale=3):
             chatbot = gr.Chatbot(label="", height=460, show_label=False)
             with gr.Row():
-                user_input = gr.Textbox(
-                    placeholder="Ask your mentor something... (Enter to send)",
-                    label="",
-                    lines=2,
-                    scale=5,
-                    show_label=False,
-                )
+                user_input = gr.Textbox(placeholder="Ask your mentor something...", label="", lines=2, scale=5, show_label=False)
                 send_btn = gr.Button("Send ➤", variant="primary", scale=1)
 
     history_state = gr.State([])
 
-    def do_send(msg, hist, persona):
-        return chat(msg, hist, persona)
-
-    send_btn.click(do_send, [user_input, history_state, persona_selector], [history_state, user_input]).then(
-        lambda h: h, [history_state], [chatbot])
-    user_input.submit(do_send, [user_input, history_state, persona_selector], [history_state, user_input]).then(
-        lambda h: h, [history_state], [chatbot])
-    clear_btn.click(clear_chat, [], [history_state, user_input]).then(
-        lambda h: h, [history_state], [chatbot])
+    send_btn.click(chat, [user_input, history_state, persona_selector], [history_state, user_input]).then(lambda h: h, [history_state], [chatbot])
+    user_input.submit(chat, [user_input, history_state, persona_selector], [history_state, user_input]).then(lambda h: h, [history_state], [chatbot])
+    clear_btn.click(clear_chat, [], [history_state, user_input]).then(lambda h: h, [history_state], [chatbot])
     persona_selector.change(update_examples, [persona_selector], [ex1, ex2, ex3])
-    persona_selector.change(clear_chat, [], [history_state, user_input]).then(
-        lambda h: h, [history_state], [chatbot])
-    ex1.click(lambda h, p: send_example(0, h, p), [history_state, persona_selector], [history_state, user_input]).then(
-        lambda h: h, [history_state], [chatbot])
-    ex2.click(lambda h, p: send_example(1, h, p), [history_state, persona_selector], [history_state, user_input]).then(
-        lambda h: h, [history_state], [chatbot])
-    ex3.click(lambda h, p: send_example(2, h, p), [history_state, persona_selector], [history_state, user_input]).then(
-        lambda h: h, [history_state], [chatbot])
+    persona_selector.change(clear_chat, [], [history_state, user_input]).then(lambda h: h, [history_state], [chatbot])
+    ex1.click(lambda h, p: send_example(0, h, p), [history_state, persona_selector], [history_state, user_input]).then(lambda h: h, [history_state], [chatbot])
+    ex2.click(lambda h, p: send_example(1, h, p), [history_state, persona_selector], [history_state, user_input]).then(lambda h: h, [history_state], [chatbot])
+    ex3.click(lambda h, p: send_example(2, h, p), [history_state, persona_selector], [history_state, user_input]).then(lambda h: h, [history_state], [chatbot])
 
-demo.launch(
-    server_name="0.0.0.0",
-    server_port=7860,
-    show_api=False,
-    share=False,
-)
+demo.launch(server_name="0.0.0.0", server_port=7860, show_api=False, share=False)
