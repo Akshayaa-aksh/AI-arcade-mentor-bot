@@ -124,7 +124,8 @@ with gr.Blocks(
         #title  { text-align: center; }
         #subtitle { text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 10px; }
         footer  { display: none !important; }
-    """
+    """,
+    api_open=False
 ) as demo:
 
     gr.Markdown("# 🎓 AI Arcade Mentor Bot", elem_id="title")
