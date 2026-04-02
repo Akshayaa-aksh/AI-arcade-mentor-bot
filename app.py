@@ -191,8 +191,8 @@ with gr.Blocks(
 
 if __name__ == "__main__":
     demo.launch(
-        server_name="127.0.0.1",
-        server_port=7860,
-        show_api=False,
-        share=False,
-    )
+    server_name="0.0.0.0",   # ← was "127.0.0.1"
+    server_port=7860,
+    show_api=False,
+    share=False,
+)
