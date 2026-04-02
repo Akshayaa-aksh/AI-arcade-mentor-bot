@@ -1,6 +1,9 @@
-import os
+import os, subprocess, sys
 os.environ.pop("SSL_CERT_FILE", None)
 os.environ.pop("REQUESTS_CA_BUNDLE", None)
+
+# Apply the file-level patch before importing gradio
+exec(open("/app/fix_gradio.py").read())
 
 import gradio as gr
 from groq import Groq
@@ -125,7 +128,6 @@ with gr.Blocks(
             ex2 = gr.Button(init_ex[1])
             ex3 = gr.Button(init_ex[2])
             clear_btn = gr.Button("🗑️ Clear Chat", variant="secondary")
-
         with gr.Column(scale=3):
             chatbot = gr.Chatbot(label="", height=460, show_label=False)
             with gr.Row():
