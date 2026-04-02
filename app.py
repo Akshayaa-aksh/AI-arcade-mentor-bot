@@ -2,11 +2,25 @@ import os
 os.environ.pop("SSL_CERT_FILE", None)
 os.environ.pop("REQUESTS_CA_BUNDLE", None)
 
+# ── Monkey-patch gradio_client bug (gradio==4.44.0 + new pydantic) ──
+import gradio_client.utils as _gcu
+
+def _patched_get_type(schema):
+    if not isinstance(schema, dict):
+        return "any"
+    if "const" in schema:
+        return "const"
+    if "enum" in schema:
+        return "enum"
+    return schema.get("type", "any")
+
+_gcu.get_type = _patched_get_type
+# ── End patch ────────────────────────────────────────────────────────
+
 import gradio as gr
 from groq import Groq
 from dotenv import load_dotenv
 
-# ── Load env ──────────────────────────────────────────────
 load_dotenv()
 
 api_key = os.getenv("GROQ_API_KEY")
@@ -15,7 +29,6 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
-# ── Persona definitions ────────────────────────────────────
 PERSONAS = {
     "🤖 Maya — ML Engineer": {
         "name": "Maya",
@@ -70,19 +83,15 @@ PERSONAS = {
 
 PERSONA_KEYS = list(PERSONAS.keys())
 
-# ── Core chat function ─────────────────────────────────────
 def chat(user_message, history, persona_key):
     if not user_message.strip():
         return history, ""
-
     persona = PERSONAS[persona_key]
-
     groq_messages = [{"role": "system", "content": persona["system_prompt"]}]
     for human, assistant in history:
         groq_messages.append({"role": "user", "content": human})
         groq_messages.append({"role": "assistant", "content": assistant})
     groq_messages.append({"role": "user", "content": user_message})
-
     try:
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -93,26 +102,20 @@ def chat(user_message, history, persona_key):
         bot_reply = completion.choices[0].message.content
     except Exception as e:
         bot_reply = f"⚠️ Error: {str(e)}"
-
     history = history + [(user_message, bot_reply)]
     return history, ""
 
-
 def clear_chat():
     return [], ""
-
 
 def send_example(idx, history, persona_key):
     text = PERSONAS[persona_key]["examples"][idx]
     return chat(text, history, persona_key)
 
-
 def update_examples(persona_key):
     ex = PERSONAS[persona_key]["examples"]
     return gr.update(value=ex[0]), gr.update(value=ex[1]), gr.update(value=ex[2])
 
-
-# ── Gradio UI ──────────────────────────────────────────────
 with gr.Blocks(
     theme=gr.themes.Soft(
         primary_hue="blue",
@@ -166,24 +169,19 @@ with gr.Blocks(
 
     send_btn.click(do_send, [user_input, history_state, persona_selector], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
-
     user_input.submit(do_send, [user_input, history_state, persona_selector], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
-
     clear_btn.click(clear_chat, [], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
-
     persona_selector.change(update_examples, [persona_selector], [ex1, ex2, ex3])
     persona_selector.change(clear_chat, [], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
-
     ex1.click(lambda h, p: send_example(0, h, p), [history_state, persona_selector], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
     ex2.click(lambda h, p: send_example(1, h, p), [history_state, persona_selector], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
     ex3.click(lambda h, p: send_example(2, h, p), [history_state, persona_selector], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
-
 
 demo.launch(
     server_name="0.0.0.0",
