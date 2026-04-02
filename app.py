@@ -124,8 +124,7 @@ with gr.Blocks(
         #title  { text-align: center; }
         #subtitle { text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 10px; }
         footer  { display: none !important; }
-    """,
-    api_open=False
+    """
 ) as demo:
 
     gr.Markdown("# 🎓 AI Arcade Mentor Bot", elem_id="title")
@@ -162,7 +161,6 @@ with gr.Blocks(
 
     history_state = gr.State([])
 
-    # Send
     def do_send(msg, hist, persona):
         return chat(msg, hist, persona)
 
@@ -172,16 +170,13 @@ with gr.Blocks(
     user_input.submit(do_send, [user_input, history_state, persona_selector], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
 
-    # Clear
     clear_btn.click(clear_chat, [], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
 
-    # Persona switch
     persona_selector.change(update_examples, [persona_selector], [ex1, ex2, ex3])
     persona_selector.change(clear_chat, [], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
 
-    # Example buttons
     ex1.click(lambda h, p: send_example(0, h, p), [history_state, persona_selector], [history_state, user_input]).then(
         lambda h: h, [history_state], [chatbot])
     ex2.click(lambda h, p: send_example(1, h, p), [history_state, persona_selector], [history_state, user_input]).then(
@@ -190,9 +185,8 @@ with gr.Blocks(
         lambda h: h, [history_state], [chatbot])
 
 
-if __name__ == "__main__":
-    demo.launch(
-    server_name="0.0.0.0",   # ← was "127.0.0.1"
+demo.launch(
+    server_name="0.0.0.0",
     server_port=7860,
     show_api=False,
     share=False,
