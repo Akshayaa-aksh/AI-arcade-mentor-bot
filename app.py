@@ -2,18 +2,21 @@ import os
 os.environ.pop("SSL_CERT_FILE", None)
 os.environ.pop("REQUESTS_CA_BUNDLE", None)
 
-# ── Nuclear patch: stop gradio from crashing on api_info ──
-import gradio.routes as _gr_routes
-_original_api_info = _gr_routes.api_info
+# ── Patch: silence the gradio_client schema crash ──────────
+import gradio_client.utils as _gcu
+from gradio_client.utils import APIInfoParseError
 
-def _safe_api_info(*args, **kwargs):
+_original_json_schema = _gcu._json_schema_to_python_type
+
+def _safe_json_schema(schema, defs=None):
     try:
-        return _original_api_info(*args, **kwargs)
+        return _original_json_schema(schema, defs)
     except Exception:
-        pass
+        return "Any"
 
-_gr_routes.api_info = _safe_api_info
-# ── End patch ──────────────────────────────────────────────
+_gcu._json_schema_to_python_type = _safe_json_schema
+_gcu.json_schema_to_python_type = lambda schema: _safe_json_schema(schema, schema.get("$defs") if isinstance(schema, dict) else None)
+# ── End patch ───────────────────────────────────────────────
 
 import gradio as gr
 from groq import Groq
