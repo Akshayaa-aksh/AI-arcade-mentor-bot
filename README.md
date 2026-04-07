@@ -12,7 +12,9 @@ pinned: false
 
 # 🎓 AI Arcade Mentor Bot
 
-An interactive AI-powered mentor chatbot with multiple expert personas:
+An interactive AI-powered mentor chatbot designed to guide users with multiple expert personas and memory capabilities.
+
+## 🤖 Personas
 
 - 🤖 Maya — ML Engineer  
 - 🐍 Leo — Python Coach  
@@ -20,10 +22,17 @@ An interactive AI-powered mentor chatbot with multiple expert personas:
 
 ## 🚀 Features
 
-- Multi-persona AI mentoring system  
-- Context-aware conversations  
-- Quick example prompts  
-- Clean and interactive UI using Gradio  
+- 🧠 Memory-enabled conversations (remembers previous interactions)
+- 🎭 Multi-persona AI mentoring system  
+- 💬 Context-aware responses  
+- ⚡ Quick example prompts  
+- 🎨 Clean and interactive UI using Gradio  
+
+## 🧠 Memory System
+
+- Stores previous conversation context  
+- Improves response relevance over time  
+- Enables more human-like interaction  
 
 ## 🔐 Environment Variables
 
@@ -37,7 +46,10 @@ Set the following secret in Hugging Face Spaces:
 - Gradio  
 - Groq API (LLMs)
 
----
+## 📦 Installation (Local)
 
-💡 Built for learning, mentoring, and interactive AI exploration.
-
+```bash
+git clone <your-repo-link>
+cd AI-ARCADE-MENTOR-BOT
+pip install -r requirements.txt
+python app.py
