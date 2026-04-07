@@ -1,15 +1,3 @@
----
-title: AI Arcade Mentor Bot
-emoji: 🎓
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "4.44.0"
-python_version: "3.10"
-app_file: app.py
-pinned: false
----
-
 # 🎓 AI Arcade Mentor Bot
 
 An interactive AI-powered mentor chatbot designed to guide users with multiple expert personas and memory capabilities.
