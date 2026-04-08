@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 860f2ea (Refactored project structure into modular architecture; removed old files and added backend app structure)
 # 🎓 AI Arcade Mentor Bot
 
 An interactive AI-powered mentor chatbot designed to guide users with multiple expert personas and memory capabilities.
